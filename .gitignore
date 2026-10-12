@@ -1,0 +1,6 @@
+node_modules/
+data.json
+backups/
+instances/
+*.log
+.opencode/cache/

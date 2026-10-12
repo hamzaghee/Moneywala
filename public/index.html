@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoneyWala — Home Budget</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="/icon.svg" />
+  <link rel="manifest" href="/manifest.json" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">💰</span>
+      <h1>MoneyWala</h1>
+    </div>
+    <div class="topbar-right">
+      <span id="saveStatus" class="save-status" title="Auto-saved">●</span>
+      <label class="currency-label">
+        Currency
+        <select id="currencySelect">
+          <option value="$">CAD ($)</option>
+          <option value="USD$">USD (USD$)</option>
+          <option value="€">EUR (€)</option>
+          <option value="£">GBP (£)</option>
+          <option value="₹">INR (₹)</option>
+          <option value="¥">JPY (¥)</option>
+          <option value="₩">KRW (₩)</option>
+          <option value="₽">RUB (₽)</option>
+          <option value="R">ZAR (R)</option>
+          <option value="A$">AUD (A$)</option>
+          <option value="₱">PHP (₱)</option>
+          <option value="Kr">SEK (kr)</option>
+        </select>
+      </label>
+      <button id="menuBtn" class="icon-btn" title="Options">⋮</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="expenses">Expenses</button>
+    <button class="tab" data-tab="income">Income</button>
+    <button class="tab" data-tab="budgets">Budgets</button>
+    <button class="tab" data-tab="savings">Savings</button>
+    <button class="tab" data-tab="recurring">Recurring</button>
+    <button class="tab" data-tab="debts">Debts</button>
+    <button class="tab" data-tab="accounts">Accounts</button>
+    <button class="tab" data-tab="review">Review<span class="tab-badge hidden" id="reviewBadge">0</span></button>
+    <button class="tab" data-tab="history">History</button>
+  </nav>
+
+  <main class="content">
+    <!-- DASHBOARD -->
+    <section class="panel active" id="dashboard">
+      <div class="dash-filter">
+        <span class="dash-filter-label">Period</span>
+        <input type="date" id="dashFrom" />
+        <span class="dash-dash">–</span>
+        <input type="date" id="dashTo" />
+        <span class="dash-chips">
+          <button class="chip active" data-preset="month" type="button">This month</button>
+          <button class="chip" data-preset="lastMonth" type="button">Last month</button>
+          <button class="chip" data-preset="quarter" type="button">Last 3 months</button>
+          <button class="chip" data-preset="year" type="button">This year</button>
+          <button class="chip" data-preset="all" type="button">All time</button>
+        </span>
+      </div>
+
+      <div class="summary-cards">
+        <div class="card income-card">
+          <div class="card-label">Income</div>
+          <div class="card-value" id="totalIncome">—</div>
+          <div class="card-sub" id="incSub">—</div>
+        </div>
+        <div class="card expense-card">
+          <div class="card-label">Expenses</div>
+          <div class="card-value" id="totalExpenses">—</div>
+          <div class="card-sub" id="expSub">—</div>
+        </div>
+        <div class="card net-card">
+          <div class="card-label">Net</div>
+          <div class="card-value" id="netThisPeriod">—</div>
+          <div class="card-sub" id="netSub">—</div>
+        </div>
+        <div class="card savings-card">
+          <div class="card-label">Total Saved</div>
+          <div class="card-value" id="totalSavings">—</div>
+          <div class="card-sub" id="savSub">—</div>
+        </div>
+      </div>
+
+      <div class="insights" id="insightsSection">
+        <div class="card insight-card">
+          <div class="card-label">Savings rate (this month)</div>
+          <div class="card-value" id="savingsRate">—</div>
+          <div class="card-sub" id="savingsRateSub">Transfers into goals ÷ income this month</div>
+        </div>
+        <div class="card insight-card">
+          <div class="card-label">Fixed vs variable (this month)</div>
+          <div class="card-value" id="fixedVarBreak">—</div>
+          <div class="card-sub" id="fixedVarSub"></div>
+        </div>
+        <div class="card insight-card">
+          <div class="card-label">Next 30 days</div>
+          <div class="card-value" id="next30Proj">—</div>
+          <div class="card-sub" id="next30Sub">Projected recurring income (green) vs spending (red)</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="chart-box">
+          <h2>Spending by Category <span class="chart-sub" id="spendSub"></span></h2>
+          <canvas id="spendChart" width="480" height="320"></canvas>
+        </div>
+        <div class="chart-box">
+          <h2>Savings Goals Progress</h2>
+          <canvas id="savingsChart" width="480" height="320"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-box">
+        <h2>Monthly Income vs Expenses</h2>
+        <canvas id="monthlyChart" width="960" height="300"></canvas>
+        <div id="monthlyChart_legend" style="margin-top:8px;"></div>
+      </div>
+    </section>
+
+    <!-- EXPENSES -->
+    <section class="panel" id="expenses">
+      <div class="split">
+        <div class="form-box">
+          <h2>Add Expense</h2>
+          <form id="expenseForm">
+            <label class="field">
+              <span class="field-label">Date</span>
+              <input type="date" id="expDate" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Amount</span>
+              <input type="number" id="expAmount" step="0.01" min="0.01" placeholder="e.g. 500" required />
+            </label>
+            <label class="field split-field">
+              <label class="split-toggle"><input type="checkbox" id="expSplitToggle"> Split across categories</label>
+              <div id="expSplitRows"></div>
+              <div class="field-help">Add line items that must add up to the full amount above. Useful for shared bills or mixed purchases.</div>
+            </label>
+            <label class="field">
+              <span class="field-label">Category</span>
+              <select id="expCategory" required></select>
+            </label>
+            <label class="field" id="expAccountField">
+              <span class="field-label">Account <em>(optional)</em></span>
+              <select id="expAccount">
+                <option value="">No account</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">Description <em>(optional)</em></span>
+              <input type="text" id="expDesc" placeholder="e.g. Groceries" />
+            </label>
+            <label class="field">
+              <span class="field-label">Tags <em>(comma-separated, optional)</em></span>
+              <input type="text" id="expTags" placeholder="e.g. groceries, weekly" />
+            </label>
+            <label class="field">
+              <span class="field-label">Notes <em>(optional)</em></span>
+              <textarea id="expNotes" placeholder="Additional notes..." rows="2"></textarea>
+            </label>
+            <label class="field">
+              <span class="field-label">Recurring <em>(optional)</em></span>
+              <select id="expRecurring">
+                <option value="">None</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Bi-weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </label>
+            <label class="field" id="expGoalField">
+              <span class="field-label">Apply to savings goal <em>(optional)</em></span>
+              <select id="expGoal">
+                <option value="">No goal</option>
+              </select>
+              <span class="field-help">Pick a goal to add this amount to its progress on the Savings page — e.g. $500 toward "Holiday" counts as saved toward Holiday.</span>
+            </label>
+            <button type="submit" class="primary">Add Expense</button>
+          </form>
+        </div>
+        <div class="form-box">
+          <h2>Expenses by Category</h2>
+          <canvas id="expCategoryChart" width="480" height="300"></canvas>
+        </div>
+      </div>
+      <div class="form-box">
+        <h2>Recent Expenses</h2>
+        <div class="toolbar">
+          <input type="text" id="expSearch" class="search-input" placeholder="Search expenses..." />
+          <label>Filter by month: <input type="month" id="expMonthFilter" /></label>
+          <button id="clearExpenses" class="danger-text">Clear all</button>
+        </div>
+        <table id="expensesTable">
+          <thead><tr><th>Date</th><th>Category</th><th>Description</th><th class="num">Amount</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- INCOME -->
+    <section class="panel" id="income">
+      <div class="split">
+        <div class="form-box">
+          <h2>Add Income</h2>
+          <form id="incomeForm">
+            <label class="field">
+              <span class="field-label">Date</span>
+              <input type="date" id="incDate" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Amount</span>
+              <input type="number" id="incAmount" step="0.01" min="0.01" placeholder="Amount" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Source</span>
+              <input type="text" id="incSource" placeholder="Source (e.g. Salary)" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Tags <em>(comma-separated, optional)</em></span>
+              <input type="text" id="incTags" placeholder="e.g. freelance, monthly" />
+            </label>
+            <label class="field">
+              <span class="field-label">Notes <em>(optional)</em></span>
+              <textarea id="incNotes" placeholder="Additional notes..." rows="2"></textarea>
+            </label>
+            <label class="field">
+              <span class="field-label">Recurring <em>(optional)</em></span>
+              <select id="incRecurring">
+                <option value="">None</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="biweekly">Bi-weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </label>
+            <button type="submit" class="primary">Add Income</button>
+          </form>
+        </div>
+        <div class="form-box">
+          <h2>Income by Source</h2>
+          <div class="dash-filter">
+            <span class="dash-chips" style="margin-left:0">
+              <button class="chip active" data-preset="all" type="button">All time</button>
+              <button class="chip" data-preset="month" type="button">This month</button>
+              <button class="chip" data-preset="lastMonth" type="button">Last month</button>
+              <button class="chip" data-preset="quarter" type="button">Last 3 months</button>
+              <button class="chip" data-preset="year" type="button">This year</button>
+            </span>
+            <input type="date" id="incChartFrom" />
+            <span class="dash-dash">–</span>
+            <input type="date" id="incChartTo" />
+          </div>
+          <canvas id="incomeChart" width="480" height="300"></canvas>
+        </div>
+      </div>
+      <div class="form-box">
+        <h2>Recent Income</h2>
+        <div class="toolbar">
+          <input type="text" id="incSearch" class="search-input" placeholder="Search income..." />
+          <label>Filter by month: <input type="month" id="incMonthFilter" /></label>
+          <button id="clearIncome" class="danger-text">Clear all</button>
+        </div>
+        <table id="incomeTable">
+          <thead><tr><th>Date</th><th>Source</th><th class="num">Amount</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BUDGETS -->
+    <section class="panel" id="budgets">
+      <div class="split">
+        <div class="form-box">
+          <h2>Monthly Budget by Category</h2>
+          <form id="budgetForm">
+            <select id="budgetCategory" required></select>
+            <input type="number" id="budgetAmount" step="0.01" min="0" placeholder="Monthly limit" required />
+            <button type="submit" class="primary">Save Budget</button>
+          </form>
+          <ul id="budgetList" class="list"></ul>
+        </div>
+        <div class="form-box">
+          <h2>Budget vs Spending (this month)</h2>
+          <canvas id="budgetChart" width="480" height="320"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- SAVINGS -->
+    <section class="panel" id="savings">
+      <div class="savings-summary">
+        <div class="ss-left">
+          <div class="ss-main">
+            <span class="ss-label">Total Saved</span>
+            <span class="ss-value" id="totalSavedAll">—</span>
+            <span class="ss-of" id="totalTargetAll"></span>
+          </div>
+          <div class="ss-meta" id="savingsMeta"></div>
+        </div>
+        <div class="ss-right">
+          <div class="ss-pct" id="overallPct"></div>
+          <div class="ss-bar">
+            <div id="ssBarFill"></div>
+            <i class="ss-ms" style="left:25%"></i>
+            <i class="ss-ms" style="left:50%"></i>
+            <i class="ss-ms" style="left:75%"></i>
+          </div>
+        </div>
+      </div>
+      <div class="split">
+        <div class="form-box">
+          <h2>New Savings Goal</h2>
+          <form id="savingsForm">
+            <label class="field">
+              <span class="field-label">Goal name</span>
+              <input type="text" id="goalName" placeholder="e.g. Holiday, New laptop, Emergency fund" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Target amount</span>
+              <input type="number" id="goalTarget" step="0.01" min="1" placeholder="e.g. 2000" required />
+              <span class="field-help">The full amount you want to save for this goal.</span>
+            </label>
+            <label class="field">
+              <span class="field-label">Saved so far <em>(optional)</em></span>
+              <input type="number" id="goalStart" step="0.01" min="0" placeholder="e.g. 500" value="0" />
+              <span class="field-help">Money you have already set aside toward this goal.</span>
+            </label>
+            <label class="field">
+              <span class="field-label">Goal date <em>(optional)</em></span>
+              <input type="date" id="goalDeadline" />
+              <span class="field-help">When you want to have the full amount saved. We will show your monthly pace and whether you are on track.</span>
+            </label>
+            <button type="submit" class="primary">Create Goal</button>
+          </form>
+        </div>
+        <div class="form-box">
+          <h2>Goals Overview</h2>
+          <canvas id="goalsChart" width="480" height="320"></canvas>
+        </div>
+      </div>
+      <div class="form-box">
+        <div class="goals-head">
+          <h2>My Savings Goals</h2>
+          <label class="goal-sort">Sort
+            <select id="goalSort">
+              <option value="progress-desc">Most progress</option>
+              <option value="progress-asc">Least progress</option>
+              <option value="deadline">Deadline soonest</option>
+              <option value="target-desc">Largest target</option>
+              <option value="name">Name A–Z</option>
+            </select>
+          </label>
+        </div>
+        <div id="goalsList" class="goals-grid"></div>
+      </div>
+    </section>
+
+    <!-- RECURRING -->
+    <section class="panel" id="recurring">
+      <div class="form-box">
+        <h2>Recurring Templates</h2>
+        <p class="field-help">Templates are created automatically when you mark an expense or income as recurring. Upcoming occurrences are projected read-only — they are not added to your balance until the real transaction happens.</p>
+        <div id="recurringList" class="rec-grid"></div>
+      </div>
+    </section>
+
+    <!-- DEBTS -->
+    <section class="panel" id="debts">
+      <div class="split">
+        <div class="form-box">
+          <h2>Add Debt</h2>
+          <form id="debtForm">
+            <label class="field">
+              <span class="field-label">Name</span>
+              <input type="text" id="debtName" placeholder="e.g. Credit Card, Personal loan" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Type</span>
+              <select id="debtType">
+                <option value="credit">Credit card (you owe)</option>
+                <option value="loan">Loan you owe</option>
+                <option value="owed">Someone owes me</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">Balance</span>
+              <input type="number" id="debtAmount" step="0.01" min="0" placeholder="Current balance" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Interest rate % / year <em>(optional)</em></span>
+              <input type="number" id="debtRate" step="0.01" min="0" placeholder="e.g. 24.99" />
+            </label>
+            <label class="field">
+              <span class="field-label">Minimum payment / month <em>(optional)</em></span>
+              <input type="number" id="debtMin" step="0.01" min="0" placeholder="e.g. 500" />
+            </label>
+            <button type="submit" class="primary">Add Debt</button>
+          </form>
+        </div>
+        <div class="form-box">
+          <h2>Debt Overview</h2>
+          <canvas id="debtChart" width="480" height="320"></canvas>
+        </div>
+      </div>
+      <div class="form-box">
+        <div class="goals-head">
+          <h2>My Debts</h2>
+        </div>
+        <div id="debtsList" class="goals-grid"></div>
+      </div>
+    </section>
+
+    <!-- ACCOUNTS -->
+    <section class="panel" id="accounts">
+      <div class="split">
+        <div class="form-box">
+          <h2>Add Account</h2>
+          <form id="accountForm">
+            <label class="field">
+              <span class="field-label">Name</span>
+              <input type="text" id="acctName" placeholder="e.g. Wallet, Bank Card" required />
+            </label>
+            <label class="field">
+              <span class="field-label">Type</span>
+              <select id="acctType">
+                <option value="cash">Cash</option>
+                <option value="card">Card / Bank</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="field-label">Balance</span>
+              <input type="number" id="acctBalance" step="0.01" placeholder="Current balance" />
+            </label>
+            <button type="submit" class="primary">Add Account</button>
+          </form>
+        </div>
+        <div class="form-box">
+          <h2>Accounts</h2>
+          <p class="field-help">Assign expenses to an account (Wallet, Card, etc.) so you can see where your money sits. Balances are tracked manually.</p>
+          <div id="accountsList" class="goals-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REVIEW -->
+    <section class="panel" id="review">
+      <div class="form-box">
+        <div class="goals-head">
+          <h2>Review imported transactions</h2>
+          <button id="approveAllBtn" class="primary-sm">Approve all</button>
+        </div>
+        <p class="field-help">Rows from statement imports that the model was not fully confident about wait here. Edit any field, then Approve to add it or Skip to discard.</p>
+        <div id="reviewList"></div>
+      </div>
+      <div class="form-box">
+        <div class="goals-head">
+          <h2>Import history</h2>
+        </div>
+        <div id="importHistory"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="history">
+      <h2>History</h2>
+      <p class="field-help">The last 100 changes to your data, newest first. Undo any of them.</p>
+      <ul id="historyList" class="hist-list"></ul>
+    </section>
+  </main>
+
+  <!-- Options menu -->
+  <div id="menuOverlay" class="overlay hidden"></div>
+  <div id="optionsMenu" class="dropdown hidden">
+    <button id="exportBtn" class="dropdown-item">⬇ Export data (JSON)</button>
+    <button id="exportCsvBtn" class="dropdown-item">📄 Export expenses (CSV)</button>
+    <button id="importBtn" class="dropdown-item">⬆ Import data (JSON)</button>
+    <button id="importPdfBtn" class="dropdown-item">📥 Import statement (PDF)</button>
+    <input type="file" id="importPdfFile" accept="application/pdf" hidden />
+    <button id="backupBtn" class="dropdown-item">💾 Load Backup</button>
+    <button id="versionsBtn" class="dropdown-item">📚 Data versions</button>
+    <button id="manageCatsBtn" class="dropdown-item">🏷 Manage categories</button>
+    <button id="settingsBtn" class="dropdown-item">⚙ LLM Settings</button>
+    <button id="historyMenuBtn" class="dropdown-item">🕘 View history</button>
+    <button id="demoBtn" class="dropdown-item">✨ Load demo data</button>
+    <button id="deleteDataBtn" class="dropdown-item danger">🗑 Delete Data</button>
+    <button id="exitBtn" class="dropdown-item danger">Exit</button>
+    <input type="file" id="importFile" accept="application/json" hidden />
+  </div>
+
+  <!-- Categories management modal -->
+  <div id="catModalOverlay" class="overlay hidden"></div>
+  <div id="catModal" class="modal hidden">
+    <div class="modal-header">
+      <h2>Manage Categories</h2>
+      <button id="closeCatModal" class="icon-btn" title="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="cat-add-row">
+        <input type="text" id="newCatInput" placeholder="New category name" />
+        <button id="addCatBtn" class="primary">Add</button>
+      </div>
+      <ul id="catList" class="cat-list"></ul>
+    </div>
+  </div>
+
+  <!-- Backups modal -->
+  <div id="backupModalOverlay" class="overlay hidden"></div>
+  <div id="backupModal" class="modal hidden">
+    <div class="modal-header">
+      <h2>Backups</h2>
+      <button id="closeBackupModal" class="icon-btn" title="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="field-help">Click a backup to restore it. Newest backups appear first.</p>
+      <ul id="backupList" class="backup-list"></ul>
+    </div>
+  </div>
+
+  <!-- Data versions modal -->
+  <div id="versionsModalOverlay" class="overlay hidden"></div>
+  <div id="versionsModal" class="modal hidden">
+    <div class="modal-header">
+      <h2>Data versions</h2>
+      <button id="closeVersionsModal" class="icon-btn" title="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="field-help">Saved versions of your data, newest first. Click one to load it — your current data will be replaced (you can undo from the History panel).</p>
+      <ul id="versionList" class="backup-list"></ul>
+    </div>
+  </div>
+
+  <!-- Delete data confirm modal -->
+  <div id="deleteModalOverlay" class="overlay hidden"></div>
+  <div id="deleteModal" class="modal hidden">
+    <div class="modal-header">
+      <h2>Delete Data</h2>
+      <button id="closeDeleteModal" class="icon-btn" title="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="field-help">Are you sure you want to delete all your data? Everything will be reset to a blank state.</p>
+      <p class="field-help">Your current data is saved as a version first, so you can restore it any time from <b>Data versions</b> in the ☰ menu.</p>
+      <label class="field">
+        <span class="field-label">Name this version (optional)</span>
+        <input type="text" id="versionNameInput" maxlength="60" placeholder="e.g. Before new start — the date is added automatically" />
+      </label>
+      <div class="settings-actions">
+        <button id="cancelDeleteBtn" class="secondary">Cancel</button>
+        <button id="confirmDeleteBtn" class="danger-btn">Yes, delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset done modal -->
+  <div id="resetDoneModalOverlay" class="overlay hidden"></div>
+  <div id="resetDoneModal" class="modal hidden">
+    <div class="modal-header">
+      <h2>Data reset</h2>
+      <button id="closeResetDoneModal" class="icon-btn" title="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="resetDoneMsg" class="field-help"></p>
+      <div class="settings-actions">
+        <button id="resetDoneOkBtn" class="primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settingsModalOverlay" class="overlay hidden"></div>
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-header">
+      <h2>Import Settings</h2>
+      <button id="closeSettingsModal" class="icon-btn" title="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="field-help">Uploaded statements are parsed by your local LLM. The only network call is from this app's server to the endpoint below.</p>
+      <label class="field">
+        <span class="field-label">LLM endpoint (base URL)</span>
+        <input type="text" id="llmBaseUrl" placeholder="http://127.0.0.1:8080" spellcheck="false" />
+      </label>
+      <label class="field">
+        <span class="field-label">Model name</span>
+        <input type="text" id="llmModel" placeholder="qwen3.8:27b-q4_K_M" spellcheck="false" />
+      </label>
+      <label class="field">
+        <span class="field-label">Auto-commit confidence (0–1)</span>
+        <input type="number" id="confThreshold" min="0" max="1" step="0.05" />
+        <span class="field-help">Rows at or above this confidence are added directly; the rest wait in the review queue.</span>
+      </label>
+      <div class="settings-actions">
+        <button id="llmTestBtn" class="secondary">Test connection</button>
+        <span id="llmTestResult" class="settings-status"></span>
+      </div>
+      <div class="settings-actions">
+        <button id="settingsSaveBtn" class="primary">Save settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statement import modal -->
+  <div id="importModalOverlay" class="overlay hidden"></div>
+  <div id="importModal" class="modal hidden">
+    <div class="modal-header">
+      <h2>Import Statement</h2>
+      <button id="closeImportModal" class="icon-btn" title="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="importStepPick" class="import-step">
+        <p class="field-help">Pick a text-based bank or credit-card statement PDF. It is read by your local LLM — nothing is sent anywhere except to the endpoint in Import settings.</p>
+        <div class="settings-actions">
+          <button id="importPickBtn" class="primary">Choose PDF…</button>
+        </div>
+      </div>
+      <div id="importStepWork" class="import-step hidden">
+        <div class="import-working">
+          <div class="spinner" id="importSpinner"></div>
+          <div>
+            <div id="importStatusText" class="import-status-text">Working…</div>
+            <div id="importElapsed" class="import-elapsed"></div>
+          </div>
+        </div>
+        <div class="settings-actions">
+          <button id="importCancelBtn" class="secondary">Stop waiting</button>
+        </div>
+      </div>
+      <div id="importStepDup" class="import-step hidden">
+        <p id="importDupText" class="import-warn">This file was already imported.</p>
+        <div class="settings-actions">
+          <button id="importDupBtn" class="secondary">Import anyway</button>
+        </div>
+      </div>
+      <div id="importStepError" class="import-step hidden">
+        <p id="importErrorText" class="import-warn">Something went wrong.</p>
+      </div>
+      <div id="importStepDone" class="import-step hidden">
+        <p id="importDoneSummary" class="import-done-summary"></p>
+        <div id="importDoneList" class="import-done-list"></div>
+        <div class="settings-actions">
+          <button id="importReviewBtn" class="secondary hidden">Review N rows</button>
+          <button id="importDoneBtn" class="primary">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/vendor/pdf.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+const fs = require('fs');
+const path = require('path');
+function pdfTextLines(content) {
+  const items = content.items.filter((it) => typeof it.str === 'string');
+  const lines = new Map();
+  for (const it of items) {
+    const y = Math.round(it.transform[5]);
+    if (!lines.has(y)) lines.set(y, []);
+    lines.get(y).push(it);
+  }
+  return [...lines.entries()].sort((a, b) => b[0] - a[0]).map(([, its]) =>
+    its.sort((a, b) => a.transform[4] - b.transform[4]).map((it) => it.str).join(' ').trim()
+  ).filter((l) => l).join('\n');
+}
+(async () => {
+  const pdfjsLib = require(path.join(__dirname, '..', 'public', 'vendor', 'pdf.min.js'));
+  pdfjsLib.GlobalWorkerOptions.workerSrc = path.join(__dirname, '..', 'public', 'vendor', 'pdf.worker.min.js');
+  const data = new Uint8Array(fs.readFileSync(path.join(__dirname, 'sample-long.pdf')));
+  const doc = await pdfjsLib.getDocument({ data }).promise;
+  let text = '';
+  for (let i = 1; i <= doc.numPages; i++) text += pdfTextLines(await (await doc.getPage(i)).getTextContent()) + '\n';
+  text = text.slice(-330);
+  const res = await fetch('http://127.0.0.1:5173/api/import/parse', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }),
+  });
+  console.log('status:', res.status);
+  console.log(await res.text());
+})().catch(e => { console.error(e.message); process.exit(1); });

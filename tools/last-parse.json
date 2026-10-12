@@ -1,0 +1,85 @@
+{
+ "ok": true,
+ "statement": {
+  "kind": "bank",
+  "period": "2026-07-01..2026-07-31",
+  "account": "7788"
+ },
+ "transactions": [
+  {
+   "date": "2026-07-02",
+   "description": "ROGER S COFFEE",
+   "amount": 6.4,
+   "type": "expense",
+   "confidence": 0.95,
+   "category": "Dining",
+   "source": null
+  },
+  {
+   "date": "2026-07-04",
+   "description": "NETFLIX.COM",
+   "amount": 15.99,
+   "type": "expense",
+   "confidence": 0.95,
+   "category": "Entertainment",
+   "source": null
+  },
+  {
+   "date": "2026-07-09",
+   "description": "DIRECT DEPOSIT SALARY",
+   "amount": 2450,
+   "type": "income",
+   "confidence": 0.95,
+   "category": null,
+   "source": "salary"
+  },
+  {
+   "date": "2026-07-12",
+   "description": "SHELL GAS STATION",
+   "amount": 58.23,
+   "type": "expense",
+   "confidence": 0.95,
+   "category": "Fuel",
+   "source": null
+  },
+  {
+   "date": "2026-07-15",
+   "description": "CARD PAYMENT VISA 4321",
+   "amount": 300,
+   "type": "transfer",
+   "confidence": 0.95,
+   "category": null,
+   "source": null
+  },
+  {
+   "date": "2026-07-21",
+   "description": "TIM HORTONS #2201",
+   "amount": 8.75,
+   "type": "expense",
+   "confidence": 0.95,
+   "category": "Dining",
+   "source": null
+  },
+  {
+   "date": "2026-07-28",
+   "description": "UHG SUPERMARKET",
+   "amount": 96.42,
+   "type": "expense",
+   "confidence": 0.95,
+   "category": "Groceries",
+   "source": null
+  },
+  {
+   "date": "2026-07-30",
+   "description": "MAINTENANCE FEE",
+   "amount": 2.95,
+   "type": "fee",
+   "confidence": 0.95,
+   "category": null,
+   "source": null
+  }
+ ],
+ "truncated": false,
+ "model": "qwen3.8:27b-q4_K_M",
+ "ms": 38656
+}

@@ -1,0 +1,9 @@
+{
+  "name": "moneywala",
+  "version": "1.0.0",
+  "description": "Local home budgeting app with expenses, income, budgets and savings goals.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT"
+}
