@@ -778,7 +778,8 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`\n  MoneyWala is running at http://localhost:${PORT}`);
-  console.log(`  (bound to localhost only)\n  Press Ctrl+C to stop.\n`);
+const HOST = process.env.PORT ? '0.0.0.0' : '127.0.0.1';
+server.listen(PORT, HOST, () => {
+  console.log(`\n  MoneyWala is running at http://localhost:${PORT} (bound to ${HOST})`);
+  console.log(`  Press Ctrl+C to stop.\n`);
 });
