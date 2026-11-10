@@ -19,6 +19,31 @@
   --radius-sm: 8px;
   --radius-lg: 16px;
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --surface-2: #1e293b;
+  --ms-tick: rgba(255, 255, 255, 0.28);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #f4f5fa;
+  --bg-elevated: #ffffff;
+  --bg-input: #eceef5;
+  --border: #dcdfe9;
+  --text: #20243a;
+  --text-dim: #5c637d;
+  --accent: #6c5ce7;
+  --accent-2: #a29bfe;
+  --accent-hover: #5a4bd4;
+  --success: #2f9e5f;
+  --danger: #e05252;
+  --warn: #d97a2b;
+  --income: #2f9e5f;
+  --expense: #e05252;
+  --shadow: 0 4px 24px rgba(35, 40, 70, 0.08);
+  --shadow-lg: 0 8px 32px rgba(35, 40, 70, 0.14);
+  --surface-2: #e9ebf3;
+  --ms-tick: rgba(0, 0, 0, 0.22);
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -29,7 +54,6 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
-  color-scheme: dark;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -159,7 +183,6 @@ html {
 .dash-filter input[type="date"] {
   background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm);
   color: var(--text); padding: 8px 12px; font-size: 14px;
-  color-scheme: dark;
   transition: var(--transition);
 }
 .dash-filter input[type="date"]:focus { outline: none; border-color: var(--accent); }
@@ -214,7 +237,7 @@ html {
   border-radius: 8px; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .ss-ms {
-  position: absolute; top: 2px; width: 2px; height: 8px; background: rgba(255, 255, 255, 0.28);
+  position: absolute; top: 2px; width: 2px; height: 8px; background: var(--ms-tick);
 }
 .ss-ms:nth-child(2) { left: 25%; }
 .ss-ms:nth-child(3) { left: 50%; }
@@ -368,6 +391,10 @@ button.danger-btn:active {
 .settings-actions {
   display: flex; align-items: center; gap: 12px; margin-top: 14px;
   flex-wrap: wrap;
+}
+.settings-divider {
+  border: none; border-top: 1px solid var(--border);
+  margin: 18px 0;
 }
 .settings-status { font-size: 13px; color: var(--text-dim); }
 .settings-status.ok { color: #35d0a1; }

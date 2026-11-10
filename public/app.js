@@ -14,9 +14,14 @@ const DEFAULT_CATEGORIES = [
 
 function defaultSettings() {
   return {
+    theme: 'dark',
     llm: { baseUrl: 'http://127.0.0.1:8080', model: 'qwen3.8:27b-q4_K_M', timeoutMs: 300000 },
     import: { confidenceThreshold: 0.85 },
   };
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
 }
 
 const state = {
@@ -1245,6 +1250,14 @@ function escapeHtml(s) {
 }
 
 /* ---------- charts (canvas, no library) ---------- */
+function chartColors() {
+  const light = document.documentElement.getAttribute('data-theme') === 'light';
+  return {
+    label: light ? '#3a4152' : '#e6e9ef',
+    track: light ? '#e3e6ef' : '#2a2f3a',
+  };
+}
+
 function clearCanvas(canvas) {
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
   if (!canvas.dataset.baseW) {
@@ -1274,12 +1287,13 @@ function renderCategoryChart(canvasId, map) {
   }
   const max = Math.max(1, ...entries.map(e => e[1])) * 1.1;
   const barH = (h - padT - padB) / entries.length - 8;
+  const cc = chartColors();
   entries.forEach((e, i) => {
     const y = padT + i * ((h - padT - padB) / entries.length);
     const bw = ((e[1] / max) * (w - padL - padR));
     ctx.fillStyle = CATEGORY_PALETTE[i % CATEGORY_PALETTE.length];
     ctx.fillRect(padL, y, bw, barH);
-    ctx.fillStyle = '#e6e9ef'; ctx.textAlign = 'right'; ctx.font = '12px system-ui';
+    ctx.fillStyle = cc.label; ctx.textAlign = 'right'; ctx.font = '12px system-ui';
     ctx.fillText(e[0], padL - 8, y + barH / 2 + 4);
     ctx.textAlign = 'left';
     ctx.fillText(fmtShort(e[1]), padL + bw + 6, y + barH / 2 + 4);
@@ -1351,6 +1365,7 @@ function renderBudgetChart() {
   }
   const max = Math.max(1, ...entries.map(e => Math.max(e[1], e[2]))) * 1.1;
   const rowH = (h - padT - padB) / entries.length - 8;
+  const cc = chartColors();
   entries.forEach((e, i) => {
     const y = padT + i * ((h - padT - padB) / entries.length);
     const [cat, budget, sp] = e;
@@ -1358,7 +1373,7 @@ function renderBudgetChart() {
     const sw = (sp / max) * (w - padL - padR);
     ctx.fillStyle = '#4f9dff'; ctx.fillRect(padL, y, bw, rowH);
     if (sp > budget) { ctx.fillStyle = '#ff5c6c'; ctx.fillRect(padL, y, sw, rowH); }
-    ctx.fillStyle = '#e6e9ef'; ctx.textAlign = 'right'; ctx.font = '12px system-ui';
+    ctx.fillStyle = cc.label; ctx.textAlign = 'right'; ctx.font = '12px system-ui';
     ctx.fillText(cat, padL - 8, y + rowH / 2 + 4);
     const over = sp > budget;
     ctx.fillStyle = over ? '#ff5c6c' : '#9aa3b2'; ctx.textAlign = 'left';
@@ -1387,13 +1402,14 @@ function drawGoalsProgress(canvasId) {
   const gap = 26;
   const top = padT;
   const barH = Math.min(gap - 8, (h - top - padB) / n);
+  const cc = chartColors();
   goals.forEach((g, i) => {
     const y = top + i * gap;
     const targetW = (g.target / max) * (w - padL - padR);
     const curW = (g.current / max) * (w - padL - padR);
-    ctx.fillStyle = '#2a2f3a'; ctx.fillRect(padL, y, targetW, barH);
+    ctx.fillStyle = cc.track; ctx.fillRect(padL, y, targetW, barH);
     ctx.fillStyle = '#35d0a1'; ctx.fillRect(padL, y, curW, barH);
-    ctx.fillStyle = '#e6e9ef'; ctx.textAlign = 'left'; ctx.font = '12px system-ui';
+    ctx.fillStyle = cc.label; ctx.textAlign = 'left'; ctx.font = '12px system-ui';
     ctx.fillText(g.name, padL + targetW + 8, y + barH / 2 + 4);
   });
 }
@@ -1860,6 +1876,7 @@ document.getElementById('catModalOverlay').addEventListener('click', closeCatMod
 /* ---------- import settings ---------- */
 function readSettingsForm() {
   return {
+    theme: document.getElementById('themeSelect').value,
     baseUrl: document.getElementById('llmBaseUrl').value.trim().replace(/\/+$/, ''),
     model: document.getElementById('llmModel').value.trim(),
     threshold: parseFloat(document.getElementById('confThreshold').value),
@@ -1868,9 +1885,11 @@ function readSettingsForm() {
 function applySettingsToState(f) {
   const prev = state.settings || defaultSettings();
   state.settings = {
+    theme: f.theme === 'light' ? 'light' : 'dark',
     llm: { baseUrl: f.baseUrl, model: f.model, timeoutMs: (prev.llm && prev.llm.timeoutMs) || 300000 },
     import: { confidenceThreshold: isNaN(f.threshold) ? 0.85 : f.threshold },
   };
+  applyTheme(state.settings.theme);
 }
 function validateSettingsForm(f) {
   if (!/^https?:\/\/[^\s/]+/.test(f.baseUrl)) return 'Enter a valid endpoint URL (e.g. http://127.0.0.1:8080)';
@@ -1880,6 +1899,7 @@ function validateSettingsForm(f) {
 }
 function openSettingsModal() {
   const s = state.settings || defaultSettings();
+  document.getElementById('themeSelect').value = s.theme === 'light' ? 'light' : 'dark';
   document.getElementById('llmBaseUrl').value = (s.llm && s.llm.baseUrl) || '';
   document.getElementById('llmModel').value = (s.llm && s.llm.model) || '';
   document.getElementById('confThreshold').value = (s.import && s.import.confidenceThreshold != null) ? s.import.confidenceThreshold : 0.85;
@@ -1904,6 +1924,7 @@ document.getElementById('settingsSaveBtn').addEventListener('click', () => {
   applySettingsToState(f);
   scheduleSave();
   closeSettingsModal();
+  render();
   toast('Settings saved');
 });
 
@@ -2651,6 +2672,7 @@ function seedAndMigrate() {
     if (i.recurring && !i._isTemplate) state.recurringTemplates.push(templateFromTransaction('income', i));
     return true;
   });
+  applyTheme(state.settings && state.settings.theme);
 }
 
 /* ---------- service worker (inert; exists only so old caching workers can be replaced) ---------- */

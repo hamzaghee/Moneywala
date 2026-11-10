@@ -29,6 +29,7 @@ const CONTENT_TYPES = {
 
 function defaultSettings() {
   return {
+    theme: 'dark',
     llm: { baseUrl: 'http://127.0.0.1:8080', model: 'qwen3.8:27b-q4_K_M', timeoutMs: 300000 },
     import: { confidenceThreshold: 0.85 },
   };
@@ -37,6 +38,7 @@ function defaultSettings() {
 function normalizeSettings(raw) {
   const d = defaultSettings();
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return d;
+  if (raw.theme === 'light' || raw.theme === 'dark') d.theme = raw.theme;
   const llm = raw.llm;
   if (llm && typeof llm === 'object') {
     if (typeof llm.baseUrl === 'string' && /^https?:\/\/[^\s/]+/.test(llm.baseUrl.trim())) {

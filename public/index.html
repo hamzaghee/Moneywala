@@ -489,7 +489,7 @@
     <button id="backupBtn" class="dropdown-item">💾 Load Backup</button>
     <button id="versionsBtn" class="dropdown-item">📚 Data versions</button>
     <button id="manageCatsBtn" class="dropdown-item">🏷 Manage categories</button>
-    <button id="settingsBtn" class="dropdown-item">⚙ LLM Settings</button>
+    <button id="settingsBtn" class="dropdown-item">⚙ Settings</button>
     <button id="historyMenuBtn" class="dropdown-item">🕘 View history</button>
     <button id="demoBtn" class="dropdown-item">✨ Load demo data</button>
     <button id="deleteDataBtn" class="dropdown-item danger">🗑 Delete Data</button>
@@ -579,10 +579,18 @@
   <div id="settingsModalOverlay" class="overlay hidden"></div>
   <div id="settingsModal" class="modal hidden">
     <div class="modal-header">
-      <h2>Import Settings</h2>
+      <h2>Settings</h2>
       <button id="closeSettingsModal" class="icon-btn" title="Close">✕</button>
     </div>
     <div class="modal-body">
+      <label class="field">
+        <span class="field-label">Appearance</span>
+        <select id="themeSelect">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </label>
+      <hr class="settings-divider" />
       <p class="field-help">Uploaded statements are parsed by your local LLM. The only network call is from this app's server to the endpoint below.</p>
       <label class="field">
         <span class="field-label">LLM endpoint (base URL)</span>
